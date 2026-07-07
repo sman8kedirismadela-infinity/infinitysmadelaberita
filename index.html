@@ -1,0 +1,1863 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infinity Smadela — Generator Berita Ekstrakurikuler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --teal:#1E4640;
+    --teal-deep:#13302C;
+    --teal-soft:#E8F0EE;
+    --yellow:#FFD23F;
+    --yellow-deep:#F5B400;
+    --yellow-pale:#FFF6DC;
+    --cream:#FFFBF2;
+    --white:#FFFFFF;
+    --ink:#16201D;
+    --ink-soft:#5B6B65;
+    --line:#DCE6E1;
+    --error:#E0533D;
+    --ok:#1E4640;
+    --radius-lg:26px;
+    --radius-md:18px;
+    --radius-sm:12px;
+    --display:'Space Grotesk',system-ui,sans-serif;
+    --body:'Plus Jakarta Sans',system-ui,sans-serif;
+    --shadow-card:0 18px 50px -20px rgba(19,48,44,0.25);
+    --shadow-pop:0 10px 28px -10px rgba(19,48,44,0.35);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;overflow-x:hidden;width:100%;}
+  body{
+    margin:0;
+    font-family:var(--body);
+    color:var(--ink);
+    background:var(--cream);
+    background-image:
+      radial-gradient(circle at 8% 0%, rgba(255,210,63,0.16), transparent 40%),
+      radial-gradient(circle at 100% 25%, rgba(30,70,64,0.06), transparent 45%);
+    min-height:100vh;
+    overflow-x:hidden;
+    width:100%;
+  }
+  ::selection{background:var(--yellow);color:var(--teal-deep);}
+  .screen{
+    min-height:100vh;
+    display:none;
+    flex-direction:column;
+  }
+  .screen.active{display:flex;}
+  button{font-family:inherit;}
+  a{color:inherit;}
+
+  /* ---------- shared top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 20px;
+    max-width:1180px;
+    width:100%;
+    margin:0 auto;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .brand img{height:34px;width:auto;display:block;}
+  .brand .brand-text{
+    font-family:var(--display);
+    font-weight:700;
+    font-size:15px;
+    color:var(--teal-deep);
+    line-height:1.1;
+  }
+  .brand .brand-text small{
+    display:block;
+    font-family:var(--body);
+    font-weight:600;
+    font-size:9.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  @media (max-width:560px){
+    .brand .brand-text{font-size:13px;}
+    .brand .brand-text small{display:none;}
+    .brand img{height:28px;}
+    .user-chip span{display:none;}
+    .topbar-right{gap:6px;flex-wrap:nowrap;}
+    .pill-btn{padding:8px 11px;font-size:12px;white-space:nowrap;}
+  }
+  @media (max-width:430px){
+    .topbar.app-topbar .inner{flex-wrap:wrap;row-gap:10px;}
+    .topbar-right{width:100%;justify-content:flex-start;flex-wrap:wrap;}
+  }
+  .topbar-right{display:flex;align-items:center;gap:10px;}
+  .pill-btn{
+    font-family:var(--body);
+    font-weight:700;
+    font-size:13px;
+    padding:9px 16px;
+    border-radius:99px;
+    border:1.5px solid var(--teal);
+    background:transparent;
+    color:var(--teal);
+    cursor:pointer;
+    transition:transform .12s, background .15s, color .15s;
+    white-space:nowrap;
+  }
+  .pill-btn:hover{background:var(--teal);color:var(--white);}
+  .pill-btn:active{transform:scale(.96);}
+  .pill-btn.solid{background:var(--teal);color:var(--white);}
+  .pill-btn.solid:hover{background:var(--teal-deep);}
+  .pill-btn.yellow{background:var(--yellow);color:var(--teal-deep);border-color:var(--yellow);}
+  .pill-btn.yellow:hover{background:var(--yellow-deep);color:var(--teal-deep);}
+  .pill-btn.ghost{border-color:var(--line);color:var(--ink-soft);}
+  .pill-btn.ghost:hover{background:var(--ink-soft);color:var(--white);border-color:var(--ink-soft);}
+  .pill-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+  .tagline-chip{
+    font-family:var(--display);
+    font-size:10.5px;
+    font-weight:600;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--teal-deep);
+    background:var(--yellow);
+    padding:5px 12px;
+    border-radius:99px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+
+  /* ================= LOGIN SCREEN ================= */
+  #screen-login,
+  #screen-admin-login{
+    align-items:center;
+    justify-content:center;
+    padding:32px 18px;
+    position:relative;
+    overflow:hidden;
+  }
+  .blob{
+    position:absolute;
+    border-radius:50%;
+    filter:blur(2px);
+    opacity:.5;
+    z-index:0;
+  }
+  .blob-1{width:340px;height:340px;background:radial-gradient(circle,rgba(255,210,63,.55),transparent 70%);top:-120px;left:-100px;}
+  .blob-2{width:420px;height:420px;background:radial-gradient(circle,rgba(30,70,64,.12),transparent 70%);bottom:-160px;right:-140px;}
+  .login-card{
+    position:relative;
+    z-index:1;
+    background:var(--white);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-card);
+    padding:38px 34px 32px;
+    max-width:420px;
+    width:100%;
+    text-align:center;
+  }
+  .login-card img.logo-big{height:64px;margin-bottom:6px;}
+  .login-card h1{
+    font-family:var(--display);
+    font-size:23px;
+    font-weight:700;
+    margin:6px 0 2px;
+    color:var(--teal-deep);
+    letter-spacing:-.01em;
+  }
+  .login-card .collab{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin:0 0 14px;
+    font-weight:600;
+  }
+  .login-card .desc{
+    font-size:13.5px;
+    color:var(--ink-soft);
+    margin:0 0 24px;
+    line-height:1.5;
+  }
+  .login-form{text-align:left;}
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--teal-deep);
+    margin-bottom:6px;
+  }
+  .input-wrap{position:relative;}
+  input,select,textarea{
+    width:100%;
+    font-family:var(--body);
+    font-size:14.5px;
+    padding:13px 14px;
+    border:2px solid var(--line);
+    border-radius:var(--radius-sm);
+    background:var(--cream);
+    color:var(--ink);
+    resize:vertical;
+    transition:border-color .15s, background .15s;
+  }
+  input::placeholder,textarea::placeholder{color:#A8B5AF;}
+  input:focus,select:focus,textarea:focus{
+    outline:none;
+    border-color:var(--teal);
+    background:var(--white);
+  }
+  .field.invalid input,.field.invalid select,.field.invalid textarea{border-color:var(--error);background:#FFF3F0;}
+  .field .err{
+    font-size:12px;
+    color:var(--error);
+    margin-top:5px;
+    font-weight:600;
+    display:none;
+  }
+  .field.invalid .err{display:block;}
+  .toggle-pass{
+    position:absolute;
+    right:12px;top:50%;
+    transform:translateY(-50%);
+    background:none;border:none;cursor:pointer;
+    font-size:12px;font-weight:700;color:var(--teal);
+    padding:4px 6px;
+  }
+  .login-submit{
+    width:100%;
+    background:var(--teal);
+    color:var(--white);
+    border:none;
+    padding:14px 16px;
+    border-radius:var(--radius-sm);
+    font-family:var(--display);
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    margin-top:6px;
+    transition:background .15s, transform .12s;
+  }
+  .login-submit:hover{background:var(--teal-deep);}
+  .login-submit:active{transform:scale(.98);}
+  .login-submit:disabled{opacity:.6;cursor:wait;}
+  .login-msg{
+    font-size:12.5px;
+    font-weight:700;
+    margin-top:12px;
+    padding:10px 12px;
+    border-radius:var(--radius-sm);
+    display:none;
+  }
+  .login-msg.show{display:block;}
+  .login-msg.error{background:#FFF0ED;color:var(--error);}
+  .login-msg.success{background:var(--teal-soft);color:var(--teal-deep);}
+  .login-hint{
+    margin-top:18px;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    line-height:1.6;
+  }
+  .login-hint b{color:var(--teal-deep);}
+  .admin-link-row{margin-top:14px;}
+  .admin-link-row button{
+    background:none;border:none;cursor:pointer;
+    font-size:12px;font-weight:700;color:var(--ink-soft);
+    text-decoration:underline;
+  }
+
+  /* ================= TOAST ================= */
+  .toast{
+    position:fixed;
+    bottom:24px;left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--teal-deep);
+    color:var(--white);
+    padding:13px 20px;
+    border-radius:99px;
+    font-size:13px;
+    font-weight:700;
+    box-shadow:var(--shadow-pop);
+    opacity:0;
+    transition:opacity .25s, transform .25s;
+    pointer-events:none;
+    z-index:200;
+    max-width:90vw;
+    text-align:center;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast.error{background:var(--error);}
+
+  /* ================= APP HEADER ================= */
+  .topbar.app-topbar{
+    border-bottom:1px solid var(--line);
+    background:rgba(255,251,242,0.85);
+    backdrop-filter:blur(6px);
+    position:sticky;
+    top:0;
+    z-index:50;
+    max-width:none;
+  }
+  .topbar.app-topbar .inner{
+    max-width:1180px;
+    margin:0 auto;
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .user-chip{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--teal-soft);
+    padding:6px 12px 6px 6px;
+    border-radius:99px;
+  }
+  .user-chip .avatar{
+    width:28px;height:28px;border-radius:50%;
+    background:var(--teal);
+    color:var(--white);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--display);font-weight:700;font-size:12px;
+  }
+  .user-chip span{font-size:12.5px;font-weight:700;color:var(--teal-deep);}
+
+  /* ================= MAIN WRAP ================= */
+  .app-main{
+    flex:1;
+    max-width:1180px;
+    margin:0 auto;
+    width:100%;
+    padding:26px 20px 70px;
+  }
+  .page-head{margin-bottom:22px;}
+  .page-head h1{
+    font-family:var(--display);
+    font-size:clamp(24px,3.4vw,32px);
+    font-weight:700;
+    color:var(--teal-deep);
+    margin:0 0 4px;
+    letter-spacing:-.01em;
+  }
+  .page-head p{
+    margin:0;
+    font-size:14px;
+    color:var(--ink-soft);
+    max-width:560px;
+    line-height:1.5;
+  }
+
+  /* ---------- infinity progress tracker (signature element) ---------- */
+  .infinity-tracker{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0;
+    margin:0 0 28px;
+    padding:18px 10px;
+    overflow-x:auto;
+  }
+  .infinity-tracker .seg{
+    display:flex;
+    align-items:center;
+    flex-shrink:0;
+  }
+  .infinity-tracker .node{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    flex-shrink:0;
+  }
+  .infinity-tracker .dot{
+    width:38px;height:38px;
+    border-radius:50%;
+    background:var(--white);
+    border:2.5px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--display);font-weight:700;font-size:14px;
+    color:var(--ink-soft);
+    transition:all .25s;
+  }
+  .infinity-tracker .label{
+    font-size:10.5px;
+    font-weight:700;
+    color:var(--ink-soft);
+    text-align:center;
+    max-width:70px;
+    line-height:1.2;
+  }
+  .infinity-tracker .node.done .dot{background:var(--teal);border-color:var(--teal);color:var(--white);}
+  .infinity-tracker .node.done .label{color:var(--teal-deep);}
+  .infinity-tracker .node.active .dot{background:var(--yellow);border-color:var(--yellow-deep);color:var(--teal-deep);transform:scale(1.12);box-shadow:0 0 0 5px var(--yellow-pale);}
+  .infinity-tracker .node.active .label{color:var(--teal-deep);}
+  .infinity-tracker .connector{
+    width:34px;height:3px;
+    background:var(--line);
+    margin:0 2px 22px;
+    border-radius:2px;
+    flex-shrink:0;
+    transition:background .25s;
+  }
+  .infinity-tracker .connector.done{background:var(--teal);}
+  @media (max-width:640px){
+    .infinity-tracker .connector{width:16px;}
+    .infinity-tracker .label{display:none;}
+  }
+
+  /* ================= CARD / STEP LAYOUT ================= */
+  .card{
+    background:var(--white);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-card);
+    padding:28px;
+    min-width:0;
+    overflow:hidden;
+  }
+  .step{display:none;}
+  .step.active{display:block;animation:fadeUp .35s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  .step h2{
+    font-family:var(--display);
+    font-size:19px;
+    font-weight:700;
+    color:var(--teal-deep);
+    margin:0 0 3px;
+  }
+  .step .step-sub{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin:0 0 22px;
+  }
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:600px){.row{grid-template-columns:1fr;}}
+  .field label .opt-tag{
+    font-weight:600;
+    color:#A8957A;
+    text-transform:none;
+    font-size:11px;
+    margin-left:4px;
+  }
+  .helper{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:5px;
+    line-height:1.4;
+  }
+
+  /* ---------- team / anggota tim ---------- */
+  .team-list{margin:6px 0 4px;display:flex;flex-direction:column;gap:10px;}
+  .team-row{
+    display:grid;
+    grid-template-columns:1fr 130px 36px;
+    gap:8px;
+    align-items:center;
+    background:var(--teal-soft);
+    padding:10px;
+    border-radius:var(--radius-sm);
+  }
+  @media (max-width:600px){.team-row{grid-template-columns:1fr;}}
+  .team-row input,.team-row select{background:var(--white);padding:10px 11px;font-size:13.5px;}
+  .team-remove{
+    background:var(--white);
+    border:1.5px solid var(--error);
+    color:var(--error);
+    border-radius:50%;
+    width:32px;height:32px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    font-size:16px;
+    font-weight:700;
+    flex-shrink:0;
+  }
+  .team-remove:hover{background:var(--error);color:var(--white);}
+  .add-team-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:none;
+    border:2px dashed var(--teal);
+    color:var(--teal);
+    font-weight:700;
+    font-size:13px;
+    padding:10px 16px;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    margin-top:4px;
+    transition:background .15s;
+  }
+  .add-team-btn:hover{background:var(--teal-soft);}
+
+  /* ---------- photo upload ---------- */
+  .photo-upload{
+    border:2px dashed var(--line);
+    border-radius:var(--radius-md);
+    padding:20px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+    position:relative;
+    background:var(--cream);
+  }
+  .photo-upload:hover{border-color:var(--teal);background:var(--teal-soft);}
+  .photo-upload.has-image{padding:0;border-style:solid;overflow:hidden;}
+  .photo-upload input[type=file]{
+    position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;
+  }
+  .photo-upload .ph-icon{font-size:26px;margin-bottom:6px;}
+  .photo-upload .ph-text{font-size:13px;font-weight:700;color:var(--teal-deep);}
+  .photo-upload .ph-sub{font-size:11px;color:var(--ink-soft);margin-top:2px;}
+  .photo-preview-wrap{position:relative;}
+  .photo-preview-wrap img{width:100%;max-height:230px;object-fit:cover;display:block;}
+  .photo-remove{
+    position:absolute;top:8px;right:8px;
+    background:rgba(22,32,29,0.75);
+    color:var(--white);
+    border:none;border-radius:99px;
+    width:28px;height:28px;
+    font-size:14px;font-weight:700;
+    cursor:pointer;
+    z-index:2;
+  }
+  .field.invalid .photo-upload{border-color:var(--error);background:#FFF3F0;}
+
+  /* ---------- step nav buttons ---------- */
+  .step-nav{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    margin-top:26px;
+    padding-top:20px;
+    border-top:1px solid var(--line);
+  }
+  .step-nav .spacer{flex:1;}
+
+  /* ================= PREVIEW / RESULT SCREEN ================= */
+  .preview-card{padding:0;overflow:hidden;}
+  .preview-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:16px 24px;
+    border-bottom:1px solid var(--line);
+    background:var(--teal-soft);
+  }
+  .preview-head .ph-label{font-size:12px;font-weight:700;color:var(--teal-deep);text-transform:uppercase;letter-spacing:.06em;}
+  .status-chip{
+    font-size:11px;font-weight:700;
+    padding:5px 12px;border-radius:99px;
+    background:var(--yellow);color:var(--teal-deep);
+  }
+  .status-chip.ready{background:var(--teal);color:var(--white);}
+  .article-area{padding:26px 28px;min-height:240px;}
+  .art-meta{font-size:11.5px;font-weight:700;color:#A8957A;margin:0 0 8px;text-transform:uppercase;letter-spacing:.05em;}
+  .art-title{
+    font-family:var(--display);
+    font-weight:700;
+    font-size:23px;
+    line-height:1.3;
+    margin:0 0 10px;
+    color:var(--teal-deep);
+    outline:none;
+    border-radius:6px;
+  }
+  .art-byline{
+    font-size:12px;font-weight:600;color:var(--ink-soft);
+    margin:0 0 18px;padding-bottom:14px;
+    border-bottom:1px solid var(--line);
+    outline:none;border-radius:6px;
+  }
+  .art-para{font-size:14.5px;line-height:1.75;margin:0 0 14px;outline:none;border-radius:6px;}
+  .art-para:focus,.art-title:focus,.art-byline:focus{background:var(--yellow-pale);padding:4px 6px;margin-left:-6px;margin-right:-6px;}
+  .art-photo{margin:0 0 16px;border-radius:var(--radius-md);overflow:hidden;}
+  .art-photo img{width:100%;display:block;}
+  .caption-text{font-size:12px;font-style:italic;color:var(--ink-soft);border-left:3px solid var(--yellow);padding-left:10px;margin:6px 0 18px;}
+  .edit-hint{font-size:11.5px;color:var(--ink-soft);padding:0 28px 18px;}
+  .loading-line{
+    display:flex;align-items:center;gap:10px;
+    font-weight:700;color:var(--teal-deep);font-size:14px;
+    padding:30px 0;justify-content:center;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--yellow-deep);animation:pulse 1.1s infinite ease-in-out;}
+  .dot:nth-child(2){animation-delay:.15s;}
+  .dot:nth-child(3){animation-delay:.3s;}
+  @keyframes pulse{0%,80%,100%{opacity:.25;}40%{opacity:1;}}
+  .actions{
+    display:flex;gap:10px;flex-wrap:wrap;
+    padding:18px 24px 24px;
+    border-top:1px solid var(--line);
+  }
+
+  /* ================= MODAL ================= */
+  .modal-overlay{
+    position:fixed;inset:0;
+    background:rgba(19,48,44,0.55);
+    display:none;
+    align-items:center;justify-content:center;
+    z-index:150;
+    padding:18px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-box{
+    background:var(--white);
+    border-radius:var(--radius-lg);
+    max-width:420px;width:100%;
+    padding:28px;
+    box-shadow:var(--shadow-card);
+    position:relative;
+  }
+  .modal-box h3{
+    font-family:var(--display);
+    font-size:18px;font-weight:700;color:var(--teal-deep);
+    margin:0 0 4px;
+  }
+  .modal-box .modal-sub{font-size:12.5px;color:var(--ink-soft);margin:0 0 18px;}
+  .modal-close{
+    position:absolute;top:18px;right:18px;
+    background:var(--cream);border:none;border-radius:50%;
+    width:30px;height:30px;cursor:pointer;font-size:14px;font-weight:700;color:var(--ink-soft);
+  }
+
+  /* ================= ADMIN ================= */
+  .admin-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;align-items:start;min-width:0;}
+  .admin-grid > *{min-width:0;}
+  @media (max-width:900px){.admin-grid{grid-template-columns:1fr;}}
+  .admin-card{padding:22px;min-width:0;overflow:hidden;}
+  @media (max-width:480px){
+    .admin-card{padding:16px;}
+    .app-main{padding:20px 14px 60px;}
+    .stat-box{padding:11px;min-width:90px;}
+    .stat-box .num{font-size:20px;}
+  }
+  .admin-card h3{font-family:var(--display);font-size:16px;color:var(--teal-deep);margin:0 0 14px;}
+  .stat-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+  .stat-box{
+    flex:1;min-width:110px;
+    background:var(--teal-soft);
+    border-radius:var(--radius-sm);
+    padding:14px;text-align:center;
+  }
+  .stat-box .num{font-family:var(--display);font-size:24px;font-weight:700;color:var(--teal-deep);}
+  .stat-box .lbl{font-size:11px;color:var(--ink-soft);font-weight:600;}
+  .table-wrap{overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--line);}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:480px;}
+  th{
+    background:var(--teal-soft);color:var(--teal-deep);
+    text-align:left;padding:10px 12px;font-weight:700;
+    position:sticky;top:0;
+  }
+  td{padding:10px 12px;border-top:1px solid var(--line);color:var(--ink);}
+  tr:hover td{background:var(--yellow-pale);}
+  .row-actions{display:flex;gap:6px;}
+  .row-actions button{
+    font-size:11px;font-weight:700;padding:6px 10px;border-radius:99px;
+    border:1.5px solid var(--teal);background:transparent;color:var(--teal);cursor:pointer;
+  }
+  .row-actions button:hover{background:var(--teal);color:var(--white);}
+  .row-actions button.danger{border-color:var(--error);color:var(--error);}
+  .row-actions button.danger:hover{background:var(--error);color:var(--white);}
+  .empty-state{
+    text-align:center;padding:30px 16px;color:var(--ink-soft);font-size:13px;
+  }
+  .link-cell a{color:var(--teal);font-weight:700;text-decoration:underline;}
+
+  footer.app-footer{
+    text-align:center;
+    padding:18px;
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+  footer.app-footer b{color:var(--teal-deep);}
+
+  .spinner-inline{
+    display:inline-block;width:14px;height:14px;
+    border:2px solid rgba(255,255,255,.4);border-top-color:#fff;
+    border-radius:50%;animation:spin .7s linear infinite;
+    vertical-align:middle;margin-right:6px;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- SCREEN 1: LOGIN -->
+<!-- ============================================================ -->
+<div class="screen active" id="screen-login">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="login-card">
+    <img src="logo.png" alt="Infinity Smadela" class="logo-big">
+    <h1>Generator Berita Ekstrakurikuler</h1>
+    <p class="collab">in collaboration with Infinity Smadela</p>
+    <p class="desc">Masuk pakai akun ekstrakurikulermu, isi liputan kegiatan, dan biarkan AI bantu nulis draf beritanya. Gampang, cepat, langsung kekirim ke admin. ✨</p>
+
+    <form class="login-form" id="login-form" onsubmit="return false;">
+      <div class="field" id="field-username">
+        <label for="login-username">Username ekstra</label>
+        <input type="text" id="login-username" placeholder="contoh: smadelator_" autocomplete="username">
+        <div class="err">Username wajib diisi</div>
+      </div>
+      <div class="field" id="field-password">
+        <label for="login-password">Password</label>
+        <div class="input-wrap">
+          <input type="password" id="login-password" placeholder="Default: 123456" autocomplete="current-password">
+          <button type="button" class="toggle-pass" onclick="togglePassword('login-password', this)">LIHAT</button>
+        </div>
+        <div class="err">Password wajib diisi</div>
+      </div>
+      <button class="login-submit" id="btn-login" onclick="handleLogin()">Masuk</button>
+      <div class="login-msg" id="login-msg"></div>
+    </form>
+
+    <p class="login-hint">Pakai username ekstrakurikulermu sendiri. Password default <b>123456</b> — nanti bisa diganti di menu profil setelah masuk.</p>
+    <div class="admin-link-row">
+      <button onclick="goToScreen('screen-admin-login')">Masuk sebagai Admin →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN ADMIN LOGIN -->
+<!-- ============================================================ -->
+<div class="screen" id="screen-admin-login">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="login-card">
+    <img src="logo.png" alt="Infinity Smadela" class="logo-big">
+    <h1>Masuk Admin</h1>
+    <p class="collab">Panel Redaksi · Infinity Smadela</p>
+    <p class="desc">Khusus pembimbing/admin. Kelola akun ekstra dan lihat semua liputan yang masuk dari sini.</p>
+    <form class="login-form" onsubmit="return false;">
+      <div class="field" id="field-adminkey">
+        <label for="admin-key-input">Kunci Admin</label>
+        <div class="input-wrap">
+          <input type="password" id="admin-key-input" placeholder="Masukkan kunci admin">
+          <button type="button" class="toggle-pass" onclick="togglePassword('admin-key-input', this)">LIHAT</button>
+        </div>
+        <div class="err">Kunci admin wajib diisi</div>
+      </div>
+      <button class="login-submit" id="btn-admin-login" onclick="handleAdminLogin()">Masuk Panel Admin</button>
+      <div class="login-msg" id="admin-login-msg"></div>
+    </form>
+    <div class="admin-link-row">
+      <button onclick="goToScreen('screen-login')">← Kembali ke login siswa</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN APP (FORM LIPUTAN) -->
+<!-- ============================================================ -->
+<div class="screen" id="screen-app">
+  <div class="topbar app-topbar">
+    <div class="inner">
+      <div class="brand">
+        <img src="logo.png" alt="Infinity Smadela">
+        <div class="brand-text">Generator Berita<small>in collaboration with Infinity Smadela</small></div>
+      </div>
+      <div class="topbar-right">
+        <div class="user-chip">
+          <div class="avatar" id="user-avatar">?</div>
+          <span id="user-name-chip">Memuat...</span>
+        </div>
+        <button class="pill-btn ghost" onclick="openPasswordModal()">🔒 Ganti Password</button>
+        <button class="pill-btn ghost" onclick="handleLogout()">Keluar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-main">
+    <div class="page-head">
+      <span class="tagline-chip">Your Events, Your Prestige</span>
+      <h1>Yuk, susun liputan kegiatanmu!</h1>
+      <p>Isi 3 langkah gampang ini: tim & kelas, foto, lalu cerita kejadiannya. Sisanya biar AI yang rapikan jadi draf berita.</p>
+    </div>
+
+    <div class="infinity-tracker" id="tracker"></div>
+
+    <div class="card">
+
+      <!-- STEP 1: TIM -->
+      <div class="step active" data-step="1">
+        <h2>1. Siapa yang liputan?</h2>
+        <p class="step-sub">Masukkan nama penulis utama, lalu tambahkan anggota tim lain kalau liputan ini dikerjakan rame-rame.</p>
+
+        <div class="row">
+          <div class="field" id="field-penulis">
+            <label>Nama penulis utama</label>
+            <input type="text" id="f-penulis" placeholder="Nama lengkap kamu">
+            <div class="err">Wajib diisi</div>
+          </div>
+          <div class="field" id="field-kelas">
+            <label>Kelas penulis utama</label>
+            <select id="f-kelas"></select>
+            <div class="err">Pilih kelas</div>
+          </div>
+        </div>
+
+        <label style="font-size:12.5px;font-weight:700;color:var(--teal-deep);display:block;margin:18px 0 8px;">Tim liputan <span class="opt-tag">opsional, kalau liputan bareng tim</span></label>
+        <div class="team-list" id="team-list"></div>
+        <button type="button" class="add-team-btn" onclick="addTeamMember()">＋ Tambah anggota tim</button>
+      </div>
+
+      <!-- STEP 2: FOTO -->
+      <div class="step" data-step="2">
+        <h2>2. Upload foto kegiatan</h2>
+        <p class="step-sub">Foto utama wajib diisi sebagai bahan berita. Foto tambahan boleh kalau ada.</p>
+
+        <div class="field" id="field-foto-wajib">
+          <label>Foto utama <span class="opt-tag" style="color:var(--error);">wajib</span></label>
+          <div class="photo-upload" id="upload-wajib" onclick="document.getElementById('input-foto-wajib').click()">
+            <input type="file" id="input-foto-wajib" accept="image/*" onchange="handlePhotoUpload(this,'wajib')">
+            <div class="ph-icon">📸</div>
+            <div class="ph-text">Ketuk untuk pilih foto</div>
+            <div class="ph-sub">JPG / PNG, maks 5MB</div>
+          </div>
+          <div class="err">Foto utama wajib diunggah</div>
+        </div>
+
+        <div class="field" id="field-foto-opsional" style="margin-top:18px;">
+          <label>Foto tambahan <span class="opt-tag">opsional</span></label>
+          <div class="photo-upload" id="upload-opsional" onclick="document.getElementById('input-foto-opsional').click()">
+            <input type="file" id="input-foto-opsional" accept="image/*" onchange="handlePhotoUpload(this,'opsional')">
+            <div class="ph-icon">🖼️</div>
+            <div class="ph-text">Ketuk untuk pilih foto (boleh dilewati)</div>
+            <div class="ph-sub">JPG / PNG, maks 5MB</div>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:18px;">
+          <label>Caption foto <span class="opt-tag">opsional</span></label>
+          <input type="text" id="f-caption" placeholder="Misal: Tim debat kelas XI-2 saat tampil di babak final">
+        </div>
+      </div>
+
+      <!-- STEP 3: DATA BERITA -->
+      <div class="step" data-step="3">
+        <h2>3. Detail acara</h2>
+        <p class="step-sub">Info dasar buat kepala berita (dateline & rubrik).</p>
+        <div class="field" id="field-judul">
+          <label>Judul berita <span class="opt-tag">opsional — AI bisa buatkan</span></label>
+          <input type="text" id="f-judul" placeholder="Kosongkan kalau mau dibuat AI">
+        </div>
+        <div class="row">
+          <div class="field" id="field-kategori">
+            <label>Kategori / rubrik</label>
+            <select id="f-kategori">
+              <option>Kegiatan Sekolah</option>
+              <option>Prestasi</option>
+              <option>Lomba</option>
+              <option>Ekstrakurikuler</option>
+              <option>Pengumuman</option>
+              <option>Lainnya</option>
+            </select>
+          </div>
+          <div class="field" id="field-tanggal">
+            <label>Tanggal kejadian</label>
+            <input type="date" id="f-tanggal">
+            <div class="err">Wajib diisi</div>
+          </div>
+        </div>
+        <div class="field" id="field-lokasi">
+          <label>Lokasi <span class="opt-tag">untuk dateline</span></label>
+          <input type="text" id="f-lokasi" placeholder="Misal: Aula SMAN 8 Kediri">
+          <div class="err">Wajib diisi</div>
+        </div>
+      </div>
+
+      <!-- STEP 4: 5W1H -->
+      <div class="step" data-step="4">
+        <h2>4. Ceritakan kejadiannya</h2>
+        <p class="step-sub">Jawab 5W+1H ini santai aja, nanti AI yang rapikan jadi narasi berita.</p>
+        <div class="field" id="field-apa">
+          <label>Apa <span class="opt-tag">peristiwa yang terjadi</span></label>
+          <textarea id="f-apa" placeholder="Contoh: SMAN 8 Kediri menggelar lomba debat bahasa Inggris antar kelas"></textarea>
+          <div class="err">Wajib diisi</div>
+        </div>
+        <div class="field" id="field-siapa">
+          <label>Siapa <span class="opt-tag">pihak yang terlibat</span></label>
+          <textarea id="f-siapa" placeholder="Contoh: Diikuti 18 tim dari kelas X dan XI, dipandu OSIS bidang bahasa"></textarea>
+          <div class="err">Wajib diisi</div>
+        </div>
+        <div class="row">
+          <div class="field" id="field-kapan">
+            <label>Kapan <span class="opt-tag">waktu rinci</span></label>
+            <input type="text" id="f-kapan" placeholder="Misal: Sabtu pagi, pukul 08.00–11.00">
+            <div class="err">Wajib diisi</div>
+          </div>
+          <div class="field" id="field-dimana">
+            <label>Di mana <span class="opt-tag">detail tempat</span></label>
+            <input type="text" id="f-dimana" placeholder="Misal: Aula lantai 2">
+            <div class="err">Wajib diisi</div>
+          </div>
+        </div>
+        <div class="field" id="field-mengapa">
+          <label>Mengapa <span class="opt-tag">alasan / latar belakang</span></label>
+          <textarea id="f-mengapa" placeholder="Contoh: Untuk melatih kepercayaan diri siswa berbicara di depan umum"></textarea>
+          <div class="err">Wajib diisi</div>
+        </div>
+        <div class="field" id="field-bagaimana">
+          <label>Bagaimana <span class="opt-tag">jalannya acara, hasil</span></label>
+          <textarea id="f-bagaimana" placeholder="Contoh: Acara berjalan lancar dengan 3 babak, dimenangkan kelas XI-2"></textarea>
+          <div class="err">Wajib diisi</div>
+        </div>
+      </div>
+
+      <!-- STEP 5: GENERATE -->
+      <div class="step" data-step="5">
+        <h2>5. Siap dibuatkan draf!</h2>
+        <p class="step-sub">Cek dulu ringkasan di bawah, kalau sudah pas klik tombol buat draf.</p>
+        <div id="review-summary"></div>
+        <button class="login-submit" id="btn-generate" style="margin-top:18px;" onclick="generateArticle()">✨ Buat Draf Berita</button>
+      </div>
+
+      <div class="step-nav">
+        <button class="pill-btn ghost" id="btn-prev" onclick="prevStep()">← Kembali</button>
+        <div class="spacer"></div>
+        <button class="pill-btn solid" id="btn-next" onclick="nextStep()">Lanjut →</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="app-footer">in collaboration with <b>Infinity Smadela</b> — Your Events, Your Prestige</footer>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN PREVIEW HASIL -->
+<!-- ============================================================ -->
+<div class="screen" id="screen-preview">
+  <div class="topbar app-topbar">
+    <div class="inner">
+      <div class="brand">
+        <img src="logo.png" alt="Infinity Smadela">
+        <div class="brand-text">Generator Berita<small>in collaboration with Infinity Smadela</small></div>
+      </div>
+      <div class="topbar-right">
+        <button class="pill-btn ghost" onclick="goToScreen('screen-app')">← Form</button>
+        <button class="pill-btn ghost" onclick="handleLogout()">Keluar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-main">
+    <div class="page-head">
+      <span class="tagline-chip">Your Events, Your Prestige</span>
+      <h1>Draf berita kamu</h1>
+      <p>Boleh disunting langsung dengan klik judul/paragrafnya, lalu kirim ke admin atau unduh filenya.</p>
+    </div>
+
+    <div class="card preview-card">
+      <div class="preview-head">
+        <span class="ph-label">Pratinjau Berita</span>
+        <span class="status-chip" id="stamp">DRAF</span>
+      </div>
+      <div class="article-area" id="article-area">
+        <div class="loading-line"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; Redaksi AI sedang menyusun berita...</div>
+      </div>
+      <div class="edit-hint" id="edit-hint" style="display:none;">✏️ Klik bagian judul atau paragraf untuk menyunting langsung sebelum dikirim/diunduh.</div>
+      <div class="actions" id="actions" style="display:none;">
+        <button class="pill-btn solid" onclick="submitToAdmin()" id="btn-submit-admin">📤 Kirim ke Admin</button>
+        <button class="pill-btn yellow" onclick="downloadDocx()">⬇️ Unduh Word</button>
+        <button class="pill-btn ghost" onclick="downloadPdf()">⬇️ Unduh PDF</button>
+        <button class="pill-btn ghost" onclick="generateArticle()">🔄 Buat Ulang</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="app-footer">in collaboration with <b>Infinity Smadela</b> — Your Events, Your Prestige</footer>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: GANTI PASSWORD -->
+<!-- ============================================================ -->
+<div class="modal-overlay" id="modal-password">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closePasswordModal()">✕</button>
+    <h3>Ganti Password</h3>
+    <p class="modal-sub">Akun: <b id="modal-username-label"></b></p>
+    <div class="field" id="field-old-pass">
+      <label>Password lama</label>
+      <input type="password" id="old-password">
+      <div class="err">Wajib diisi</div>
+    </div>
+    <div class="field" id="field-new-pass">
+      <label>Password baru</label>
+      <input type="password" id="new-password" placeholder="Minimal 6 karakter">
+      <div class="err">Minimal 6 karakter</div>
+    </div>
+    <div class="field" id="field-confirm-pass">
+      <label>Ulangi password baru</label>
+      <input type="password" id="confirm-password">
+      <div class="err">Password tidak sama</div>
+    </div>
+    <button class="login-submit" id="btn-change-pass" onclick="handleChangePassword()">Simpan Password Baru</button>
+    <div class="login-msg" id="change-pass-msg"></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN ADMIN PANEL -->
+<!-- ============================================================ -->
+<div class="screen" id="screen-admin-panel">
+  <div class="topbar app-topbar">
+    <div class="inner">
+      <div class="brand">
+        <img src="logo.png" alt="Infinity Smadela">
+        <div class="brand-text">Panel Admin<small>in collaboration with Infinity Smadela</small></div>
+      </div>
+      <div class="topbar-right">
+        <a class="pill-btn yellow" id="btn-open-sheet" href="javascript:void(0)" target="_blank" rel="noopener" onclick="if(this.getAttribute('href')==='javascript:void(0)'){alert('Link Spreadsheet belum dipasang admin. Isi SPREADSHEET_VIEW_URL di index.html.');return false;}">📊 Buka Spreadsheet</a>
+        <button class="pill-btn ghost" onclick="handleLogout()">Keluar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-main">
+    <div class="page-head">
+      <span class="tagline-chip">Your Events, Your Prestige</span>
+      <h1>Halo, Admin 👋</h1>
+      <p>Kelola akun ekstrakurikuler dan pantau semua liputan yang masuk — semuanya otomatis tersimpan di satu Spreadsheet.</p>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-box"><div class="num" id="stat-akun">—</div><div class="lbl">Akun ekstra</div></div>
+      <div class="stat-box"><div class="num" id="stat-liputan">—</div><div class="lbl">Liputan masuk</div></div>
+      <div class="stat-box"><div class="num" id="stat-bulan-ini">—</div><div class="lbl">Bulan ini</div></div>
+    </div>
+
+    <div class="admin-grid">
+      <div class="card admin-card">
+        <h3>📚 Liputan Masuk</h3>
+        <div class="table-wrap">
+          <table id="table-liputan">
+            <thead><tr><th>Waktu</th><th>Ekstra</th><th>Penulis</th><th>Kelas</th><th>Judul</th><th>Foto</th></tr></thead>
+            <tbody><tr><td colspan="6" class="empty-state">Memuat data...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card admin-card">
+        <h3>👥 Kelola Akun Ekstra</h3>
+        <div class="row" style="margin-bottom:10px;">
+          <div class="field" id="field-new-username" style="margin-bottom:0;">
+            <label>Username baru</label>
+            <input type="text" id="new-akun-username" placeholder="contoh: ekstra_baru_smadela">
+          </div>
+          <div class="field" id="field-new-nama" style="margin-bottom:0;">
+            <label>Nama ekstra <span class="opt-tag">opsional</span></label>
+            <input type="text" id="new-akun-nama" placeholder="Nama tampilan ekstra">
+          </div>
+        </div>
+        <button class="pill-btn solid" style="width:100%;margin-bottom:18px;" onclick="adminAddAkun()">＋ Buat Akun Baru</button>
+
+        <div class="table-wrap">
+          <table id="table-akun">
+            <thead><tr><th>Username</th><th>Update Terakhir</th><th>Aksi</th></tr></thead>
+            <tbody><tr><td colspan="3" class="empty-state">Memuat data...</td></tr></tbody>
+          </table>
+        </div>
+        <p class="helper" style="margin-top:10px;">Tombol <b>Reset</b> mengembalikan password akun itu ke default <b>123456</b> — pakai ini kalau ada ekstra yang lupa password.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="app-footer">in collaboration with <b>Infinity Smadela</b> — Your Events, Your Prestige</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   KONFIGURASI
+   Admin: ganti API_URL dengan Web App URL dari Google Apps Script
+   (lihat instruksi lengkap di file Code.gs / panduan setup).
+===================================================================== */
+const API_URL = "https://script.google.com/macros/s/AKfycbyewv-RlGFPW2akKVPiX3kixJJE7xtK0pICqa0tcUIvoQBG3p2WTD-BMqudfzZqpxWf/exec";
+const ADMIN_KEY_STORAGE = "infinity_admin_key_session";
+const SPREADSHEET_VIEW_URL = "https://docs.google.com/spreadsheets/d/1FzZ_1l8ijaJIQCU7Rq880J083ymmn62uUPMCQ8ZwFtc/edit?gid=977478723#gid=977478723"; // link "Buka Spreadsheet" di panel admin
+
+let currentUser = null; // {username, namaEkstra}
+let adminKey = null;
+let teamCounter = 0;
+let uploadedPhotos = { wajib: null, opsional: null };
+let currentStep = 1;
+const TOTAL_STEPS = 5;
+const STEP_LABELS = ["Tim", "Foto", "Detail", "Cerita", "Selesai"];
+
+/* ---------------------- helper umum ---------------------- */
+function goToScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0, behavior:'instant'});
+}
+
+function showToast(msg, isError){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('error');
+  if(isError) t.classList.add('error');
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 3200);
+}
+
+function togglePassword(inputId, btn){
+  const el = document.getElementById(inputId);
+  if(el.type === 'password'){ el.type = 'text'; btn.textContent = 'SEMBUNYI'; }
+  else { el.type = 'password'; btn.textContent = 'LIHAT'; }
+}
+
+function setFieldError(fieldId, isInvalid){
+  const f = document.getElementById(fieldId);
+  if(!f) return;
+  f.classList.toggle('invalid', isInvalid);
+}
+
+async function callApi(payload){
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+function buildKelasOptions(){
+  const opts = ['Guru'];
+  ['X','XI','XII'].forEach(tingkat=>{
+    for(let i=1;i<=12;i++) opts.push(`${tingkat}-${i}`);
+  });
+  return opts;
+}
+
+function populateKelasSelect(selectEl){
+  selectEl.innerHTML = '<option value="">Pilih kelas</option>' +
+    buildKelasOptions().map(k=>`<option value="${k}">${k}</option>`).join('');
+}
+
+/* ====================== LOGIN SISWA/EKSTRA ====================== */
+async function handleLogin(){
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+  let ok = true;
+  setFieldError('field-username', !username);
+  setFieldError('field-password', !password);
+  if(username) document.getElementById('field-username').classList.remove('invalid');
+  if(!username || !password){
+    if(!username) ok=false;
+    if(!password) ok=false;
+  }
+  if(!ok) return;
+
+  const btn = document.getElementById('btn-login');
+  const msg = document.getElementById('login-msg');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-inline"></span>Memeriksa...';
+  msg.classList.remove('show','error','success');
+
+  try{
+    const result = await callApi({ action:'login', username, password });
+    if(!result.ok){
+      msg.textContent = result.error || 'Login gagal.';
+      msg.classList.add('show','error');
+      return;
+    }
+    currentUser = { username: result.username, namaEkstra: result.namaEkstra };
+    sessionStorage.setItem('infinity_user', JSON.stringify(currentUser));
+    enterApp();
+    if(result.isDefaultPassword){
+      setTimeout(()=> showToast('Kamu masih pakai password default. Yuk ganti lewat menu 🔒 Ganti Password biar lebih aman!'), 600);
+    }
+  } catch(err){
+    msg.textContent = 'Tidak bisa terhubung ke server. Cek koneksi internet atau hubungi admin.';
+    msg.classList.add('show','error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Masuk';
+  }
+}
+
+function enterApp(){
+  document.getElementById('user-name-chip').textContent = currentUser.namaEkstra;
+  document.getElementById('user-avatar').textContent = currentUser.namaEkstra.charAt(0).toUpperCase();
+  document.getElementById('modal-username-label').textContent = currentUser.username;
+  resetForm();
+  goToScreen('screen-app');
+}
+
+function handleLogout(){
+  currentUser = null;
+  adminKey = null;
+  sessionStorage.removeItem('infinity_user');
+  sessionStorage.removeItem(ADMIN_KEY_STORAGE);
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+  goToScreen('screen-login');
+}
+
+/* ====================== LOGIN ADMIN ====================== */
+async function handleAdminLogin(){
+  const key = document.getElementById('admin-key-input').value.trim();
+  setFieldError('field-adminkey', !key);
+  if(!key) return;
+
+  const btn = document.getElementById('btn-admin-login');
+  const msg = document.getElementById('admin-login-msg');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-inline"></span>Memeriksa...';
+  msg.classList.remove('show','error','success');
+
+  try{
+    const result = await callApi({ action:'adminListAkun', adminKey: key });
+    if(!result.ok){
+      msg.textContent = result.error || 'Kunci admin salah.';
+      msg.classList.add('show','error');
+      return;
+    }
+    adminKey = key;
+    sessionStorage.setItem(ADMIN_KEY_STORAGE, key);
+    if(SPREADSHEET_VIEW_URL && SPREADSHEET_VIEW_URL.indexOf('PASTE_') === -1){
+      document.getElementById('btn-open-sheet').href = SPREADSHEET_VIEW_URL;
+    } else {
+      document.getElementById('btn-open-sheet').style.display = 'none';
+    }
+    goToScreen('screen-admin-panel');
+    loadAdminAkun(result);
+    loadAdminLiputan();
+  } catch(err){
+    msg.textContent = 'Tidak bisa terhubung ke server.';
+    msg.classList.add('show','error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Masuk Panel Admin';
+  }
+}
+
+/* ====================== INFINITY TRACKER ====================== */
+function renderTracker(){
+  const wrap = document.getElementById('tracker');
+  let html = '';
+  for(let i=1;i<=TOTAL_STEPS;i++){
+    const state = i < currentStep ? 'done' : (i === currentStep ? 'active' : '');
+    html += `<div class="node ${state}"><div class="dot">${i < currentStep ? '✓' : i}</div><div class="label">${STEP_LABELS[i-1]}</div></div>`;
+    if(i < TOTAL_STEPS){
+      html += `<div class="connector ${i < currentStep ? 'done' : ''}"></div>`;
+    }
+  }
+  wrap.innerHTML = html;
+}
+
+function showStep(n){
+  document.querySelectorAll('.step').forEach(s=>{
+    s.classList.toggle('active', parseInt(s.dataset.step) === n);
+  });
+  document.getElementById('btn-prev').style.visibility = n === 1 ? 'hidden' : 'visible';
+  const nextBtn = document.getElementById('btn-next');
+  nextBtn.style.display = n === TOTAL_STEPS ? 'none' : 'inline-block';
+  if(n === TOTAL_STEPS) renderReviewSummary();
+  renderTracker();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function validateStep(n){
+  let ok = true;
+  if(n === 1){
+    const nama = document.getElementById('f-penulis').value.trim();
+    const kelas = document.getElementById('f-kelas').value;
+    setFieldError('field-penulis', !nama); if(!nama) ok = false;
+    setFieldError('field-kelas', !kelas); if(!kelas) ok = false;
+  }
+  if(n === 2){
+    if(!uploadedPhotos.wajib){ setFieldError('field-foto-wajib', true); ok = false; }
+    else setFieldError('field-foto-wajib', false);
+  }
+  if(n === 3){
+    const tanggal = document.getElementById('f-tanggal').value;
+    const lokasi = document.getElementById('f-lokasi').value.trim();
+    setFieldError('field-tanggal', !tanggal); if(!tanggal) ok = false;
+    setFieldError('field-lokasi', !lokasi); if(!lokasi) ok = false;
+  }
+  if(n === 4){
+    ['apa','siapa','kapan','dimana','mengapa','bagaimana'].forEach(key=>{
+      const val = document.getElementById('f-'+key).value.trim();
+      setFieldError('field-'+key, !val);
+      if(!val) ok = false;
+    });
+  }
+  return ok;
+}
+
+function nextStep(){
+  if(!validateStep(currentStep)){
+    showToast('Lengkapi dulu kolom yang masih kosong (ditandai merah).', true);
+    return;
+  }
+  if(currentStep < TOTAL_STEPS){
+    currentStep++;
+    showStep(currentStep);
+  }
+}
+
+function prevStep(){
+  if(currentStep > 1){
+    currentStep--;
+    showStep(currentStep);
+  }
+}
+
+function resetForm(){
+  currentStep = 1;
+  uploadedPhotos = { wajib:null, opsional:null };
+  teamCounter = 0;
+  document.getElementById('team-list').innerHTML = '';
+  document.getElementById('f-penulis').value = '';
+  populateKelasSelect(document.getElementById('f-kelas'));
+  document.getElementById('f-judul').value = '';
+  document.getElementById('f-lokasi').value = '';
+  document.getElementById('f-caption').value = '';
+  document.getElementById('f-tanggal').valueAsDate = new Date();
+  ['apa','siapa','kapan','dimana','mengapa','bagaimana'].forEach(k=> document.getElementById('f-'+k).value = '');
+  resetPhotoBox('wajib');
+  resetPhotoBox('opsional');
+  showStep(1);
+}
+
+/* ====================== TIM / ANGGOTA ====================== */
+function addTeamMember(){
+  teamCounter++;
+  const id = 'team-'+teamCounter;
+  const row = document.createElement('div');
+  row.className = 'team-row';
+  row.id = id;
+  row.innerHTML = `
+    <input type="text" placeholder="Nama anggota tim" class="team-name">
+    <select class="team-kelas"></select>
+    <button type="button" class="team-remove" onclick="document.getElementById('${id}').remove()">✕</button>
+  `;
+  document.getElementById('team-list').appendChild(row);
+  populateKelasSelect(row.querySelector('.team-kelas'));
+}
+
+function getTeamMembers(){
+  return Array.from(document.querySelectorAll('.team-row')).map(row=>({
+    nama: row.querySelector('.team-name').value.trim(),
+    kelas: row.querySelector('.team-kelas').value
+  })).filter(m => m.nama);
+}
+
+/* ====================== UPLOAD FOTO ====================== */
+function handlePhotoUpload(input, type){
+  const file = input.files[0];
+  if(!file) return;
+  if(file.size > 5 * 1024 * 1024){
+    showToast('Ukuran foto maksimal 5MB ya.', true);
+    input.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    uploadedPhotos[type] = e.target.result;
+    renderPhotoPreview(type);
+    if(type === 'wajib') setFieldError('field-foto-wajib', false);
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderPhotoPreview(type){
+  const box = document.getElementById('upload-'+type);
+  box.classList.add('has-image');
+  box.innerHTML = `
+    <div class="photo-preview-wrap">
+      <button type="button" class="photo-remove" onclick="removePhoto(event,'${type}')">✕</button>
+      <img src="${uploadedPhotos[type]}" alt="Preview foto">
+    </div>
+  `;
+}
+
+function removePhoto(e, type){
+  e.stopPropagation();
+  uploadedPhotos[type] = null;
+  resetPhotoBox(type);
+}
+
+function resetPhotoBox(type){
+  const box = document.getElementById('upload-'+type);
+  box.classList.remove('has-image');
+  const isWajib = type === 'wajib';
+  box.innerHTML = `
+    <input type="file" id="input-foto-${type}" accept="image/*" onchange="handlePhotoUpload(this,'${type}')">
+    <div class="ph-icon">${isWajib ? '📸' : '🖼️'}</div>
+    <div class="ph-text">Ketuk untuk pilih foto${isWajib ? '' : ' (boleh dilewati)'}</div>
+    <div class="ph-sub">JPG / PNG, maks 5MB</div>
+  `;
+}
+
+function renderReviewSummary(){
+  const nama = document.getElementById('f-penulis').value.trim();
+  const kelas = document.getElementById('f-kelas').value;
+  const team = getTeamMembers();
+  const judul = document.getElementById('f-judul').value.trim();
+  const kategori = document.getElementById('f-kategori').value;
+  const lokasi = document.getElementById('f-lokasi').value.trim();
+  let html = `
+    <div style="background:var(--teal-soft);border-radius:var(--radius-sm);padding:16px;font-size:13.5px;line-height:1.7;">
+      <div><b>Penulis utama:</b> ${escapeHtml(nama)} (${escapeHtml(kelas)})</div>
+      ${team.length ? `<div><b>Anggota tim:</b> ${team.map(m=>`${escapeHtml(m.nama)} (${escapeHtml(m.kelas||'-')})`).join(', ')}</div>` : ''}
+      <div><b>Rubrik:</b> ${escapeHtml(kategori)}</div>
+      <div><b>Lokasi:</b> ${escapeHtml(lokasi)}</div>
+      <div><b>Judul:</b> ${judul ? escapeHtml(judul) : '<i>(akan dibuat otomatis oleh AI)</i>'}</div>
+      <div><b>Foto utama:</b> ${uploadedPhotos.wajib ? '✅ sudah diunggah' : '❌ belum ada'}</div>
+      <div><b>Foto tambahan:</b> ${uploadedPhotos.opsional ? '✅ sudah diunggah' : '— tidak ada'}</div>
+    </div>
+  `;
+  document.getElementById('review-summary').innerHTML = html;
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+/* ====================== GENERATE ARTIKEL (AI) ====================== */
+function formatTanggalIndo(dateStr){
+  if(!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  const bulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  return `${d.getDate()} ${bulan[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function formatTanggalDMY(dateStr){
+  if(!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+}
+
+let lastArticleData = null;
+
+function collectFormData(){
+  const team = getTeamMembers();
+  return {
+    penulis: document.getElementById('f-penulis').value.trim(),
+    kelas: document.getElementById('f-kelas').value,
+    team: team,
+    judul: document.getElementById('f-judul').value.trim(),
+    kategori: document.getElementById('f-kategori').value,
+    tanggalRaw: document.getElementById('f-tanggal').value,
+    tanggal: formatTanggalIndo(document.getElementById('f-tanggal').value),
+    tanggalDMY: formatTanggalDMY(document.getElementById('f-tanggal').value),
+    lokasi: document.getElementById('f-lokasi').value.trim(),
+    apa: document.getElementById('f-apa').value.trim(),
+    siapa: document.getElementById('f-siapa').value.trim(),
+    kapan: document.getElementById('f-kapan').value.trim(),
+    dimana: document.getElementById('f-dimana').value.trim(),
+    mengapa: document.getElementById('f-mengapa').value.trim(),
+    bagaimana: document.getElementById('f-bagaimana').value.trim(),
+    caption: document.getElementById('f-caption').value.trim()
+  };
+}
+
+async function generateArticle(){
+  goToScreen('screen-preview');
+  const area = document.getElementById('article-area');
+  const stamp = document.getElementById('stamp');
+  area.innerHTML = `<div class="loading-line"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; Redaksi AI sedang menyusun berita...</div>`;
+  document.getElementById('actions').style.display = 'none';
+  document.getElementById('edit-hint').style.display = 'none';
+  stamp.textContent = 'DRAF';
+  stamp.classList.remove('ready');
+
+  const data = collectFormData();
+  lastArticleData = data;
+
+  try{
+    const result = await callApi({
+      action: 'generateBerita',
+      data: {
+        penulis: data.penulis,
+        kelas: data.kelas,
+        team: data.team,
+        kategori: data.kategori,
+        judul: data.judul,
+        tanggal: data.tanggal,
+        tanggalDMY: data.tanggalDMY,
+        lokasi: data.lokasi,
+        apa: data.apa,
+        siapa: data.siapa,
+        kapan: data.kapan,
+        dimana: data.dimana,
+        mengapa: data.mengapa,
+        bagaimana: data.bagaimana
+      }
+    });
+
+    if(!result.ok){
+      showGenerateError(result.error || 'Gagal menyusun draf.');
+      return;
+    }
+    renderArticle({ judul: result.judul, paragraf: result.paragraf }, data);
+  } catch(err){
+    console.error(err);
+    showGenerateError('Tidak bisa terhubung ke server. Cek koneksi internet, lalu klik "Buat Ulang".');
+  }
+}
+
+function showGenerateError(message){
+  const area = document.getElementById('article-area');
+  area.innerHTML = `
+    <div style="text-align:center;padding:24px 10px;">
+      <div style="font-size:32px;margin-bottom:10px;">😵</div>
+      <div style="font-weight:700;color:var(--error);margin-bottom:6px;">Oops, gagal membuat berita</div>
+      <div style="font-size:13px;color:var(--ink-soft);max-width:380px;margin:0 auto;">${escapeHtml(message)}</div>
+    </div>
+  `;
+  document.getElementById('stamp').textContent = 'GAGAL';
+  document.getElementById('stamp').classList.remove('ready');
+  document.getElementById('edit-hint').style.display = 'none';
+  // tetap tampilkan tombol supaya orang bisa klik "Buat Ulang" atau balik ke form
+  const actions = document.getElementById('actions');
+  actions.style.display = 'flex';
+  actions.querySelectorAll('button').forEach(btn=>{
+    if(btn.id === 'btn-submit-admin') btn.style.display = 'none';
+    else if(btn.textContent.includes('Unduh')) btn.style.display = 'none';
+    else btn.style.display = 'inline-block';
+  });
+}
+
+function renderArticle(parsed, data){
+  const area = document.getElementById('article-area');
+  const teamNames = data.team.length ? `, ${data.team.map(m=>m.nama).join(', ')}` : '';
+  const byline = `Oleh ${data.penulis}${teamNames} · Kelas ${data.kelas} · Rubrik ${data.kategori}`;
+  let html = `<div class="art-meta">Infinity Smadela — draf liputan</div>`;
+  html += `<div class="art-title" id="art-title" contenteditable="true">${escapeHtml(parsed.judul)}</div>`;
+  html += `<div class="art-byline" id="art-byline" contenteditable="true">${escapeHtml(byline)}</div>`;
+  if(uploadedPhotos.wajib){
+    html += `<div class="art-photo"><img src="${uploadedPhotos.wajib}" alt="Foto liputan"></div>`;
+  }
+  parsed.paragraf.forEach(p=>{
+    html += `<p class="art-para" contenteditable="true">${escapeHtml(p)}</p>`;
+  });
+  if(uploadedPhotos.opsional){
+    html += `<div class="art-photo"><img src="${uploadedPhotos.opsional}" alt="Foto tambahan"></div>`;
+  }
+  if(data.caption){
+    html += `<div class="caption-text">Foto: ${escapeHtml(data.caption)}</div>`;
+  }
+  area.innerHTML = html;
+  const actions = document.getElementById('actions');
+  actions.style.display = 'flex';
+  actions.querySelectorAll('button').forEach(btn => { btn.style.display = 'inline-block'; });
+  document.getElementById('edit-hint').style.display = 'block';
+  const stamp = document.getElementById('stamp');
+  stamp.textContent = 'SIAP KIRIM';
+  stamp.classList.add('ready');
+}
+
+function getArticleContent(){
+  const titleEl = document.getElementById('art-title');
+  const bylineEl = document.getElementById('art-byline');
+  if(!titleEl) return null;
+  const paras = Array.from(document.querySelectorAll('.art-para')).map(p => p.innerText.trim()).filter(Boolean);
+  const captionEl = document.querySelector('.caption-text');
+  return {
+    judul: titleEl.innerText.trim(),
+    byline: bylineEl.innerText.trim(),
+    paragraf: paras,
+    caption: captionEl ? captionEl.innerText.replace(/^Foto:\s*/,'').trim() : ''
+  };
+}
+
+/* ====================== KIRIM KE ADMIN ====================== */
+async function submitToAdmin(){
+  const content = getArticleContent();
+  if(!content){ showToast('Buat draf berita terlebih dahulu.', true); return; }
+  const data = lastArticleData;
+  const btn = document.getElementById('btn-submit-admin');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-inline"></span>Mengirim...';
+
+  const payload = {
+    action: 'submitLiputan',
+    data: {
+      ekstra: currentUser.namaEkstra,
+      namaPenulis: data.penulis + (data.team.length ? ', ' + data.team.map(m=>m.nama).join(', ') : ''),
+      kelas: data.kelas + (data.team.length ? ' & ' + data.team.map(m=>m.kelas).join(', ') : ''),
+      judul: data.judul,
+      kategori: data.kategori,
+      tanggal: data.tanggal,
+      lokasi: data.lokasi,
+      apa: data.apa, siapa: data.siapa, kapan: data.kapan,
+      dimana: data.dimana, mengapa: data.mengapa, bagaimana: data.bagaimana,
+      caption: data.caption,
+      fotoWajib: uploadedPhotos.wajib,
+      fotoOpsional: uploadedPhotos.opsional,
+      judulFinal: content.judul,
+      isiFinal: content.paragraf.join('\n\n')
+    }
+  };
+
+  try{
+    const result = await callApi(payload);
+    if(!result.ok){
+      showToast(result.error || 'Gagal mengirim ke admin.', true);
+      return;
+    }
+    showToast('🎉 Liputan berhasil dikirim ke admin!');
+    setTimeout(()=>{
+      resetForm();
+      goToScreen('screen-app');
+    }, 1400);
+  } catch(err){
+    showToast('Tidak bisa terhubung ke server. Coba unduh manual dan kirim ke admin.', true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '📤 Kirim ke Admin';
+  }
+}
+
+/* ====================== DOWNLOAD WORD / PDF ====================== */
+async function downloadDocx(){
+  const content = getArticleContent();
+  if(!content){ showToast('Buat draf berita terlebih dahulu.', true); return; }
+  const { Document, Packer, Paragraph, TextRun, AlignmentType } = window.docx;
+
+  const children = [
+    new Paragraph({ children:[ new TextRun({ text: content.judul, bold:true, size:32 }) ], spacing:{after:120} }),
+    new Paragraph({ children:[ new TextRun({ text: content.byline, italics:true, size:20, color:'666666' }) ], spacing:{after:260} })
+  ];
+  content.paragraf.forEach(p=>{
+    children.push(new Paragraph({
+      children:[ new TextRun({ text:p, size:24 }) ],
+      alignment: AlignmentType.JUSTIFIED,
+      spacing:{after:200, line:320}
+    }));
+  });
+  if(content.caption){
+    children.push(new Paragraph({ children:[ new TextRun({ text:`Foto: ${content.caption}`, italics:true, size:20, color:'666666' }) ], spacing:{before:100} }));
+  }
+  const doc = new Document({ sections:[{ properties:{}, children }] });
+  const blob = await Packer.toBlob(doc);
+  const filename = slugify(content.judul) + '.docx';
+  saveAs(blob, filename);
+  showToast('Berkas Word diunduh: ' + filename);
+}
+
+function downloadPdf(){
+  const content = getArticleContent();
+  if(!content){ showToast('Buat draf berita terlebih dahulu.', true); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'mm', format:'a4' });
+  const marginX = 20, pageWidth = 210 - marginX*2, pageHeight = 297 - 20;
+  let y = 22;
+  function checkPage(lh){ if(y + lh > pageHeight){ doc.addPage(); y = 22; } }
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.splitTextToSize(content.judul, pageWidth).forEach(line=>{ checkPage(8); doc.text(line, marginX, y); y += 7.5; });
+  y += 2;
+  doc.setFont('helvetica','italic'); doc.setFontSize(10); doc.setTextColor(110,110,110);
+  doc.splitTextToSize(content.byline, pageWidth).forEach(line=>{ checkPage(6); doc.text(line, marginX, y); y += 5.5; });
+  doc.setDrawColor(220,220,220); doc.line(marginX, y, marginX+pageWidth, y); y += 7;
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(20,20,20);
+  content.paragraf.forEach(p=>{
+    doc.splitTextToSize(p, pageWidth).forEach(line=>{ checkPage(6.5); doc.text(line, marginX, y); y += 6; });
+    y += 3;
+  });
+  if(content.caption){
+    y += 2;
+    doc.setFont('helvetica','italic'); doc.setFontSize(9.5); doc.setTextColor(110,110,110);
+    doc.splitTextToSize('Foto: ' + content.caption, pageWidth).forEach(line=>{ checkPage(5.5); doc.text(line, marginX, y); y += 5; });
+  }
+  const filename = slugify(content.judul) + '.pdf';
+  doc.save(filename);
+  showToast('Berkas PDF diunduh: ' + filename);
+}
+
+function slugify(str){
+  return (str||'').toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').slice(0,60) || 'berita-infinity-smadela';
+}
+
+/* ====================== GANTI PASSWORD (MODAL) ====================== */
+function openPasswordModal(){
+  document.getElementById('old-password').value = '';
+  document.getElementById('new-password').value = '';
+  document.getElementById('confirm-password').value = '';
+  document.getElementById('change-pass-msg').classList.remove('show','error','success');
+  ['field-old-pass','field-new-pass','field-confirm-pass'].forEach(f=>document.getElementById(f).classList.remove('invalid'));
+  document.getElementById('modal-password').classList.add('show');
+}
+
+function closePasswordModal(){
+  document.getElementById('modal-password').classList.remove('show');
+}
+
+async function handleChangePassword(){
+  const oldPass = document.getElementById('old-password').value.trim();
+  const newPass = document.getElementById('new-password').value.trim();
+  const confirmPass = document.getElementById('confirm-password').value.trim();
+
+  let ok = true;
+  setFieldError('field-old-pass', !oldPass); if(!oldPass) ok=false;
+  setFieldError('field-new-pass', newPass.length < 6); if(newPass.length < 6) ok=false;
+  setFieldError('field-confirm-pass', newPass !== confirmPass || !confirmPass); if(newPass !== confirmPass || !confirmPass) ok=false;
+  if(!ok) return;
+
+  const btn = document.getElementById('btn-change-pass');
+  const msg = document.getElementById('change-pass-msg');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-inline"></span>Menyimpan...';
+  msg.classList.remove('show','error','success');
+
+  try{
+    const result = await callApi({
+      action: 'changePassword',
+      username: currentUser.username,
+      oldPassword: oldPass,
+      newPassword: newPass
+    });
+    if(!result.ok){
+      msg.textContent = result.error || 'Gagal mengganti password.';
+      msg.classList.add('show','error');
+      return;
+    }
+    msg.textContent = '✅ Password berhasil diganti!';
+    msg.classList.add('show','success');
+    setTimeout(closePasswordModal, 1300);
+  } catch(err){
+    msg.textContent = 'Tidak bisa terhubung ke server.';
+    msg.classList.add('show','error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Simpan Password Baru';
+  }
+}
+
+/* ====================== ADMIN: KELOLA AKUN & LIPUTAN ====================== */
+function loadAdminAkun(result){
+  const list = result.akun || [];
+  document.getElementById('stat-akun').textContent = list.length;
+  const tbody = document.querySelector('#table-akun tbody');
+  if(!list.length){
+    tbody.innerHTML = '<tr><td colspan="3" class="empty-state">Belum ada akun.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(a => `
+    <tr>
+      <td><b>${escapeHtml(a.username)}</b></td>
+      <td>${a.updateTerakhir ? new Date(a.updateTerakhir).toLocaleDateString('id-ID') : '-'}</td>
+      <td class="row-actions">
+        <button onclick="adminResetPassword('${escapeAttr(a.username)}')">Reset</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function loadAdminLiputan(){
+  try{
+    const result = await callApi({ action:'adminListLiputan', adminKey });
+    const tbody = document.querySelector('#table-liputan tbody');
+    if(!result.ok){
+      tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${escapeHtml(result.error||'Gagal memuat data.')}</td></tr>`;
+      return;
+    }
+    const list = result.liputan || [];
+    // tampilkan info debug kalau ada (membantu diagnosa saat list kosong)
+    if(result.debug) console.warn('[AdminLiputan debug]', result.debug);
+    document.getElementById('stat-liputan').textContent = list.length;
+    const now = new Date();
+    const bulanIni = list.filter(l=>{
+      // Timestamp bisa berupa ISO string, string tanggal, atau kosong
+      const raw = l.Timestamp || l.timestamp || '';
+      if(!raw) return false;
+      try {
+        const d = new Date(raw);
+        return !isNaN(d) && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      } catch(e) { return false; }
+    }).length;
+    document.getElementById('stat-bulan-ini').textContent = bulanIni;
+
+    if(!list.length){
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Belum ada liputan masuk.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.slice().reverse().map(l => `
+      <tr>
+        <td>${l.Timestamp ? new Date(l.Timestamp).toLocaleString('id-ID') : '-'}</td>
+        <td>${escapeHtml(l.Ekstra)}</td>
+        <td>${escapeHtml(l.NamaPenulis)}</td>
+        <td>${escapeHtml(l.Kelas)}</td>
+        <td>${escapeHtml(l.JudulFinal || l.Judul)}</td>
+        <td class="link-cell">${l.FotoWajibURL ? `<a href="${l.FotoWajibURL}" target="_blank">Lihat</a>` : '-'}</td>
+      </tr>
+    `).join('');
+  } catch(err){
+    document.querySelector('#table-liputan tbody').innerHTML = '<tr><td colspan="6" class="empty-state">Tidak bisa terhubung ke server.</td></tr>';
+  }
+}
+
+async function adminAddAkun(){
+  const username = document.getElementById('new-akun-username').value.trim();
+  const nama = document.getElementById('new-akun-nama').value.trim();
+  if(!username){ showToast('Isi username dulu ya.', true); return; }
+  try{
+    const result = await callApi({ action:'adminAddAkun', adminKey, username, namaEkstra: nama });
+    if(!result.ok){ showToast(result.error || 'Gagal membuat akun.', true); return; }
+    showToast('Akun baru dibuat! Password default: 123456');
+    document.getElementById('new-akun-username').value = '';
+    document.getElementById('new-akun-nama').value = '';
+    const refreshed = await callApi({ action:'adminListAkun', adminKey });
+    loadAdminAkun(refreshed);
+  } catch(err){
+    showToast('Tidak bisa terhubung ke server.', true);
+  }
+}
+
+async function adminResetPassword(username){
+  if(!confirm(`Reset password "${username}" ke default 123456?`)) return;
+  try{
+    const result = await callApi({ action:'adminResetPassword', adminKey, username });
+    if(!result.ok){ showToast(result.error || 'Gagal reset password.', true); return; }
+    showToast(`Password ${username} direset ke 123456`);
+  } catch(err){
+    showToast('Tidak bisa terhubung ke server.', true);
+  }
+}
+
+function escapeAttr(str){
+  return (str||'').replace(/'/g, "\\'");
+}
+
+/* ====================== INISIALISASI ====================== */
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('f-tanggal') && (document.getElementById('f-tanggal').valueAsDate = new Date());
+
+  const savedUser = sessionStorage.getItem('infinity_user');
+  const savedAdminKey = sessionStorage.getItem(ADMIN_KEY_STORAGE);
+
+  if(savedUser){
+    currentUser = JSON.parse(savedUser);
+    enterApp();
+  } else if(savedAdminKey){
+    adminKey = savedAdminKey;
+    goToScreen('screen-admin-panel');
+    callApi({ action:'adminListAkun', adminKey }).then(r => { if(r.ok) loadAdminAkun(r); });
+    loadAdminLiputan();
+  }
+
+  // enter key submits login forms
+  document.getElementById('login-password')?.addEventListener('keydown', e => { if(e.key==='Enter') handleLogin(); });
+  document.getElementById('admin-key-input')?.addEventListener('keydown', e => { if(e.key==='Enter') handleAdminLogin(); });
+});
+</script>
+
+</body>
+</html>
